@@ -1,8 +1,8 @@
 .PHONY: setup
 setup: \
+	cpython/.astdump \
 	cpython/.vscode/c_cpp_properties.json \
 	cpython/.vscode/settings.json \
-	astdump
 
 .PHONY: clean
 clean:
@@ -21,26 +21,20 @@ build.log: cpython/.git/refs/heads/main
 	cd cpython && ./configure
 	make -C cpython | tee build.log || rm build.log
 
-build.json: build.log build.json.py
-	python3 build.json.py > build.json || build.json
+build.json: build.log generate-build.json.py
+	python3 generate-build.json.py < build.log > build.json || rm build.json
 
-c_cpp_properties.json: build.json c_cpp_properties.json.py
-	python3 c_cpp_properties.json.py > c_cpp_properties.json || rm c_cpp_properties.json
+astdump.sh: build.json generate-astdump.sh.py
+	python3 generate-astdump.sh.py < build.json > astdump.sh || rm astdump.sh
 
-settings.json: build.json settings.json.py
-	python3 settings.json.py > settings.json || rm settings.json
+cpython/.astdump: astdump.sh
+	sh astdump.sh || rm -rf cpython/.astdump
 
-cpython/.vscode:
+cpython/.vscode: cpython/.git/refs/heads/main
 	mkdir cpython/.vscode
 
-cpython/.vscode/c_cpp_properties.json: c_cpp_properties.json | cpython/.vscode
-	cd cpython/.vscode && ln -sf ../../c_cpp_properties.json
+cpython/.vscode/c_cpp_properties.json: build.json generate-c_cpp_properties.json.py | cpython/.vscode
+	python3 generate-c_cpp_properties.json.py < build.json > cpython/.vscode/c_cpp_properties.json
 
-cpython/.vscode/settings.json: settings.json | cpython/.vscode
-	cd cpython/.vscode && ln -sf ../../settings.json
-
-astdump.sh: build.json astdump.sh.py
-	python3 astdump.sh.py > astdump.sh || rm astdump.sh
-
-astdump: astdump.sh
-	sh astdump.sh || rm -rf astdump
+cpython/.vscode/settings.json: build.json generate-settings.json.py | cpython/.vscode
+	python3 generate-settings.json.py < build.json > cpython/.vscode/settings.json

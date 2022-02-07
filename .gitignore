@@ -1,8 +1,4 @@
-/astdump
 /cpython
-/astdump.err
 /astdump.sh
 /build.json
 /build.log
-/c_cpp_properties.json
-/settings.json

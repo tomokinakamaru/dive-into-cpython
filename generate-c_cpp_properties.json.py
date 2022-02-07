@@ -1,9 +1,12 @@
 from json import dumps
 from json import load
+from os.path import exists
+from os.path import join
+from sys import stdin
 
 
 def main():
-    define, include = read('build.json')
+    define, include = read()
     data = {
         'configurations': [
             {
@@ -18,16 +21,17 @@ def main():
     print(dumps(data, indent=4))
 
 
-def read(path):
+def read():
     define, include = set(), set()
-    with open(path) as f:
-        for dct in load(f).values():
-            define.update(dct['define'])
-            for i in dct['include']:
-                if i.startswith('/'):
-                    include.add(i)
-                else:
-                    include.add(f'${{workspaceFolder}}/{i}')
+    for dct in load(stdin).values():
+        define.update(dct['define'])
+        for i in dct['include']:
+            if i.startswith('/'):
+                include.add(i)
+            else:
+                if exists(f'cpython/{i}'):
+                    path = join('${workspaceFolder}', i)
+                    include.add(path)
     return list(define), list(include)
 
 

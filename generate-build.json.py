@@ -5,6 +5,7 @@ from os.path import join
 from os.path import realpath
 from os.path import relpath
 from shlex import split
+from sys import stdin
 
 
 class Main(object):
@@ -12,11 +13,11 @@ class Main(object):
         self.entries = {}
 
     def main(self):
-        for line in read('build.log'):
+        for line in read():
             tokens = parse(line)
             if tokens and tokens[0] == 'gcc':
                 self.analyze(tokens)
-        print(dumps(self.entries, indent=2,  sort_keys=True))
+        print(dumps(self.entries, indent=2))
 
     def analyze(self, tokens):
         source, define, include = None, [], []
@@ -29,8 +30,8 @@ class Main(object):
                 include.append(self.fixpath(t[2:]))
         if source:
             self.entries[source] = {
-                'define': list(set(define)),
-                'include': list(set(include))
+                'define': list(define),
+                'include': list(include)
             }
 
     @staticmethod
@@ -39,13 +40,12 @@ class Main(object):
         return path if p.startswith('..') else p
 
 
-def read(path):
-    with open(path) as f:
-        for line in f:
-            line = line.rstrip('\n')
-            while line.endswith('\\'):
-                line = line[:-1] + next(f).rstrip('\n')
-            yield line
+def read():
+    for line in stdin:
+        line = line.rstrip('\n')
+        while line.endswith('\\'):
+            line = line[:-1] + next(stdin).rstrip('\n')
+        yield line
 
 
 def parse(line):

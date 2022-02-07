@@ -2,27 +2,24 @@ from json import dumps
 from json import load
 from os import walk
 from os.path import join
+from sys import stdin
 
 
 def main():
     c_files = list(find_c_files())
-    with open('build.json') as f:
-        for path in load(f):
-            c_files.remove(path)
+    for path in load(stdin):
+        c_files.remove(path)
 
     data = {
         'files.exclude': {
             '**/*.o': True,
             '**/*.a': True,
-            '.azure-pipelines': True,
-            '.github': True,
-            'build': True
         }
     }
     for f in c_files:
         data['files.exclude'][f] = True
-    print(dumps(data, indent=4))
 
+    print(dumps(data, indent=4))
 
 
 def find_c_files():

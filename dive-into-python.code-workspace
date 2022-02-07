@@ -1,0 +1,12 @@
+{
+    "folders": [
+        {
+            "name": "CPython",
+            "path": "cpython"
+        },
+        {
+            "name": "Incubator",
+            "path": "."
+        }
+    ]
+}
