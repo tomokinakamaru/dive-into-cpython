@@ -6,7 +6,7 @@ from sys import stdin
 
 
 def main():
-    c_files = list(find_c_files())
+    c_files = sorted(find_c_files())
     for path in load(stdin):
         c_files.remove(path)
 
