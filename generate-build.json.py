@@ -17,17 +17,17 @@ class Main(object):
             tokens = parse(line)
             if tokens and tokens[0] == 'gcc':
                 self.analyze(tokens)
-        print(dumps(self.entries, indent=2))
+        print(dumps(self.entries, indent=2, sort_keys=True))
 
     def analyze(self, tokens):
-        source, define, include = None, [], []
+        source, define, include = None, {}, {}
         for t in tokens:
             if t.endswith('.c'):
                 source = self.fixpath(t)
             if t.startswith('-D'):
-                define.append(t[2:])
+                define[t[2:]] = None
             if t.startswith('-I'):
-                include.append(self.fixpath(t[2:]))
+                include[self.fixpath(t[2:])] = None
         if source:
             self.entries[source] = {
                 'define': list(define),
