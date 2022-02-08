@@ -2,6 +2,7 @@ from json import dumps
 from json import load
 from os.path import exists
 from os.path import join
+from os.path import normpath
 from sys import stdin
 
 
@@ -29,10 +30,10 @@ def read():
             if i.startswith('/'):
                 include.add(i)
             else:
-                if exists(f'cpython/{i}'):
-                    path = join('${workspaceFolder}', i)
+                if exists(join('cpython', i)):
+                    path = normpath(join('${workspaceFolder}', i))
                     include.add(path)
-    return list(define), list(include)
+    return sorted(define), sorted(include)
 
 
 if __name__ == '__main__':
