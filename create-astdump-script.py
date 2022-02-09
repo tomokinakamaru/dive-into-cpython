@@ -6,15 +6,17 @@ import sys
 def main():
     print('#!/bin/sh')
     print('set -eu')
-    print(f'rm -rf "$2"')
+    print(f'dst="$(pwd)/$2"')
+    print(f'rm -rf "$dst"')
+    print(f'cd "$1"')
     for n, (src, defs, incs) in enumerate(read()):
         defs = build_defines(defs)
         incs = build_includes(incs)
         print(
-            'mkdir', '-p', f'"$2/{os.path.dirname(src)}"', '&&',
-            'clang', '-Xclang', '-ast-dump=json', '-fsyntax-only',
-            '-Wno-everything', *defs, *incs, f'"$1/{src}"',
-            '>', f'"$2/{src}.json"', '&'
+            'mkdir', '-p', f'"$dst/{os.path.dirname(src)}"', '&&',
+            'clang', '-Xclang', '-ast-dump=json',
+            '-fsyntax-only', '-Wno-everything', *defs, *incs,
+            src, '>', f'"$dst/{src}.json"', '&'
         )
         if n % 2 == 1:
             print('wait')
@@ -32,10 +34,7 @@ def build_defines(defs):
 
 def build_includes(incs):
     for i in incs:
-        if os.path.isabs(i):
-            yield f'-I{i}'
-        else:
-            yield f'-I"$1/{i}"'
+        yield f'-I{i}'
 
 
 def read():
