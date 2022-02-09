@@ -1,4 +1,2 @@
-/cpython
-/astdump.sh
-/build.json
-/build.log
+/cpython*
+/tmp

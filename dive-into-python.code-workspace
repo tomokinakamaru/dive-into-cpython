@@ -1,11 +1,19 @@
 {
     "folders": [
         {
-            "name": "CPython",
+            "name": "CPython (Min)",
+            "path": "cpython.min"
+        },
+        {
+            "name": "CPython (All)",
             "path": "cpython"
         },
         {
-            "name": "Incubator",
+            "name": "CPython (AST)",
+            "path": "cpython.ast"
+        },
+        {
+            "name": "Dive into CPython",
             "path": "."
         }
     ]

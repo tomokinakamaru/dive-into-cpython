@@ -1,40 +1,44 @@
-.PHONY: setup
-setup: \
-	cpython/.astdump \
-	cpython/.vscode/c_cpp_properties.json \
-	cpython/.vscode/settings.json \
+.PHONY: all
+all: cpython.ast cpython.min/.vscode/c_cpp_properties.json
+
+.PHONY: pull
+pull:
+	git -C cpython pull
 
 .PHONY: clean
 clean:
-	git clean -dfX .
-	rm -rf cpython
-
-.PHONY: update
-update: cpython/.git/refs/heads/main
-	git -C cpython pull
+	rm -rf cpython* tmp
 
 cpython/.git/refs/heads/main:
-	git clone --depth 1 https://github.com/python/cpython
+	git clone --depth 1 https://github.com/python/cpython $(SRC)
 
-build.log: cpython/.git/refs/heads/main
+cpython.min: tmp/minify.sh
+	sh tmp/minify.sh cpython cpython.min
+
+cpython.ast: tmp/astdump.sh
+	sh tmp/astdump.sh cpython cpython.ast
+
+cpython/.vscode/c_cpp_properties.json: tmp/log.json create-vscode-setting.py
+	mkdir -p cpython/.vscode
+	python3 create-vscode-setting.py cpython < tmp/log.json > cpython/.vscode/c_cpp_properties.json || rm cpython/.vscode/c_cpp_properties.json
+
+cpython.min/.vscode/c_cpp_properties.json: cpython.min cpython/.vscode/c_cpp_properties.json
+	mkdir -p cpython.min/.vscode
+	cp cpython/.vscode/c_cpp_properties.json cpython.min/.vscode/c_cpp_properties.json
+
+tmp:
+	mkdir tmp
+
+tmp/log.txt: cpython/.git/refs/heads/main | tmp
 	git -C cpython clean -dfX .
 	cd cpython && ./configure
-	make -C cpython | tee build.log || rm build.log
+	make -C cpython EXTRA_CFLAGS=-H 2>&1 | tee tmp/log.txt || rm tmp/log.txt
 
-build.json: build.log generate-build.json.py
-	python3 generate-build.json.py < build.log > build.json || rm build.json
+tmp/log.json: tmp/log.txt analyze-log.py
+	python3 analyze-log.py cpython < tmp/log.txt > tmp/log.json || rm tmp/log.json
 
-astdump.sh: build.json generate-astdump.sh.py
-	python3 generate-astdump.sh.py < build.json > astdump.sh || rm astdump.sh
+tmp/minify.sh: tmp/log.json create-minify-script.py
+	python3 create-minify-script.py < tmp/log.json > tmp/minify.sh || rm tmp/minify.sh
 
-cpython/.astdump: astdump.sh
-	sh astdump.sh || rm -rf cpython/.astdump
-
-cpython/.vscode: cpython/.git/refs/heads/main
-	mkdir cpython/.vscode
-
-cpython/.vscode/c_cpp_properties.json: build.json generate-c_cpp_properties.json.py | cpython/.vscode
-	python3 generate-c_cpp_properties.json.py < build.json > cpython/.vscode/c_cpp_properties.json
-
-cpython/.vscode/settings.json: build.json generate-settings.json.py | cpython/.vscode
-	python3 generate-settings.json.py < build.json > cpython/.vscode/settings.json
+tmp/astdump.sh: tmp/log.json create-astdump-script.py
+	python3 create-astdump-script.py < tmp/log.json > tmp/astdump.sh || rm tmp/astdump.sh
