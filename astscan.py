@@ -58,7 +58,12 @@ class Position(object):
 
     @property
     def file1(self):
-        return get(self.data, LOC_FILE)
+        if self.exp:
+            k = LOC_EXP_FILE if self.loc else RNG_EXP_FILE
+            return get(self.data, k)
+        else:
+            k = LOC_FILE if self.loc else RNG_FILE
+            return get(self.data, k)
 
     @property
     def line1(self):
