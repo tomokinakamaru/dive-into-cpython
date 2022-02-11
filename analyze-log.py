@@ -5,7 +5,7 @@ import sys
 
 
 def main():
-    output, headers = {}, {}
+    output, headers = {}, None
     for line in read():
         toks = parse(line)
         if toks:
@@ -13,12 +13,13 @@ def main():
                 p, d = parse_compile_log(toks)
                 if p:
                     output[p] = d
-                    output[p]['headers'] = list(headers)
-                headers.clear()
+                    output[p]['headers'] = headers = []
+                else:
+                    headers = None
             elif set(toks[0]) == {'.'}:
                 h = parse_header_log(toks)
                 if h:
-                    headers[h] = None
+                    headers.append(h)
     print(json.dumps(output, indent=2, sort_keys=True))
 
 
