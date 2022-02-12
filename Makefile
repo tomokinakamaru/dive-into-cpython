@@ -27,7 +27,7 @@ cpython.min/.vscode/c_cpp_properties.json: cpython.min cpython/.vscode/c_cpp_pro
 	cp cpython/.vscode/c_cpp_properties.json cpython.min/.vscode/c_cpp_properties.json
 
 tmp:
-	mkdir tmp
+	mkdir -p tmp
 
 tmp/log.txt: cpython/.git/refs/heads/main | tmp
 	git -C cpython clean -dfX .
