@@ -10,7 +10,7 @@ clean:
 	rm -rf cpython* tmp
 
 cpython/.git/refs/heads/main:
-	git clone --depth 1 https://github.com/python/cpython $(SRC)
+	git clone --depth 1 https://github.com/python/cpython
 
 cpython.min: tmp/minify.sh
 	sh tmp/minify.sh cpython cpython.min
@@ -32,7 +32,7 @@ tmp:
 tmp/log.txt: cpython/.git/refs/heads/main | tmp
 	git -C cpython clean -dfX .
 	cd cpython && ./configure
-	make -C cpython EXTRA_CFLAGS=-H &> tmp/log.txt || rm tmp/log.txt
+	make -C cpython EXTRA_CFLAGS=-H > tmp/log.txt 2>&1 || rm tmp/log.txt
 
 tmp/log.json: tmp/log.txt analyze-log.py
 	python3 analyze-log.py cpython < tmp/log.txt > tmp/log.json || rm tmp/log.json
