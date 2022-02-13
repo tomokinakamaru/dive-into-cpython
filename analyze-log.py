@@ -9,7 +9,7 @@ def main():
     for line in read():
         toks = parse(line)
         if toks:
-            if toks[0] in ('gcc',):
+            if toks[0] in ('cc', 'gcc'):
                 p, d = parse_compile_log(toks)
                 if p:
                     output[p] = d
