@@ -1,12 +1,10 @@
 #!/bin/sh
 set -eu
 
-script_path=$0
+script_dir=$(cd "$(dirname "$0")" && pwd -P)
 
-if [ -h "$script_path" ]; then
-    script_path=$(ls -ld "$script_path" | sed 's/.* -> //')
-fi
+python_path=$script_dir
 
-script_dir=$(cd "$(dirname "$script_path")" && pwd -P)
+cpython_ast=$script_dir/cpython.ast
 
-PYTHONPATH="$script_dir" CPYTHON_AST="$script_dir/cpython.ast" python3 "$@"
+PYTHONPATH="$python_path" CPYTHON_AST="$cpython_ast" python3 "$@"
