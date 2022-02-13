@@ -1,100 +1,38 @@
-import json
-import os
+from json import load
+from os import environ
+from os import walk
+from os.path import isdir
+from os.path import join
+from os.path import normpath
 
 
 def scan(func):
-    run(func, os.environ.get('CPYTHON_AST'))
+    run(func, environ.get('CPYTHON_AST'))
 
 
 def run(func, path):
-    f = run_all if os.path.isdir(path) else run_one
-    f(func, path)
+    (run_all if isdir(path) else run_one)(func, path)
 
 
 def run_all(func, path):
-    for root, _, files in os.walk(path):
+    for root, _, files in walk(path):
         for f in files:
             if f.endswith('.json'):
-                run_one(func, os.path.join(root, f))
+                run_one(func, join(root, f))
 
 
 def run_one(func, path):
     with open(path) as f:
-        visit(func, json.load(f), Context())
+        visit(func, load(f), [], Position())
 
 
-def visit(func, node, ctx):
-    ctx.stack.append(node)
-    ctx.pos.update(node)
-    func(node, ctx)
+def visit(func, node, stack, pos):
+    pos.update(node)
+    func(node, stack, pos)
+    stack.append(node)
     for n in node.get('inner', ()):
-        visit(func, n, ctx)
-    ctx.stack.pop()
-
-
-class Context(object):
-    def __init__(self):
-        self.stack = []
-        self.pos = Position()
-
-
-class Position(object):
-    def __init__(self):
-        self.data = {}
-        self.exp = False
-        self.loc = False
-
-    def __str__(self):
-        f1, l1 = self.file1, self.line1
-        f2, l2 = self.file2, self.line2
-        return f'{f1}:{l1};{f2}:{l2}' if f2 else f'{f1}:{l1}'
-
-    @property
-    def cpython(self):
-        if os.path.isabs(self.file1):
-            return False
-        f = self.file2
-        return not os.path.isabs(f) if f else True
-
-    @property
-    def file1(self):
-        if self.exp:
-            k = LOC_EXP_FILE if self.loc else RNG_EXP_FILE
-            return get(self.data, k)
-        else:
-            k = LOC_FILE if self.loc else RNG_FILE
-            return get(self.data, k)
-
-    @property
-    def line1(self):
-        if self.exp:
-            k = LOC_EXP_LINE if self.loc else RNG_EXP_LINE
-            return get(self.data, k)
-        else:
-            k = LOC_LINE if self.loc else RNG_LINE
-            return get(self.data, k)
-
-    @property
-    def file2(self):
-        if self.exp:
-            k = LOC_SPL_FILE if self.loc else RNG_SPL_FILE
-            return get(self.data, k)
-        return None
-
-    @property
-    def line2(self):
-        if self.exp:
-            k = LOC_SPL_LINE if self.loc else RNG_SPL_LINE
-            return get(self.data, k)
-        return None
-
-    def update(self, node):
-        for k in POS_KEYS:
-            v = get(node, k)
-            if v:
-                set(self.data, k, v)
-        self.exp = has(node, LOC_EXP) or has(node, RNG_EXP)
-        self.loc = has(node, LOC_LINE) or has(node, LOC_EXP_LINE)
+        visit(func, n, stack, pos)
+    stack.pop()
 
 
 def has(dct, key):
@@ -119,6 +57,49 @@ def set(dct, key, val):
     for k in key[:-1]:
         d = d.setdefault(k, {})
     d[key[-1]] = val
+
+
+class Position(object):
+    def __init__(self):
+        self.gen = 0
+        self.dct = {}
+        self.cache = {}
+        for k in POS_KEYS:
+            set(self.dct, k, (0, '?'))
+
+    def __str__(self):
+        return f'{self.file}:{self.line}'
+
+    def update(self, node):
+        self.gen += 1
+        for k in POS_KEYS:
+            if has(node, k):
+                set(self.dct, k, (self.gen, get(node, k)))
+
+    def get(self, *keys):
+        return sorted(
+            (get(self.dct, k) for k in keys),
+            key=lambda x: -x[0]
+        )[0][1]
+
+    def set(self, key, val):
+        set(self.dct, key, val)
+
+    @property
+    def file(self):
+        return normpath(self.get(
+            LOC_FILE, RNG_FILE,
+            LOC_EXP_FILE, RNG_EXP_FILE,
+            LOC_SPL_FILE, RNG_SPL_FILE
+        ))
+
+    @property
+    def line(self):
+        return self.get(
+            LOC_LINE, RNG_LINE,
+            LOC_EXP_LINE, RNG_EXP_LINE,
+            LOC_SPL_LINE, RNG_SPL_LINE
+        )
 
 
 LOC = 'loc',
