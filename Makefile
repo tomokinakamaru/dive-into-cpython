@@ -5,6 +5,11 @@ all: cpython.ast cpython/.vscode/c_cpp_properties.json
 pull:
 	git -C cpython pull
 
+.PHONY: checkout
+checkout:
+	git -C cpython fetch origin $(BRANCH)
+	git -C cpython checkout $(BRANCH)
+
 .PHONY: clean
 clean:
 	rm -rf cpython* tmp
