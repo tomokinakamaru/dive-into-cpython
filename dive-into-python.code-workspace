@@ -1,11 +1,7 @@
 {
     "folders": [
         {
-            "name": "CPython (Min)",
-            "path": "cpython.min"
-        },
-        {
-            "name": "CPython (All)",
+            "name": "CPython (Source)",
             "path": "cpython"
         },
         {
